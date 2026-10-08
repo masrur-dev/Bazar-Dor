@@ -1,7 +1,10 @@
+import { Suspense } from "react";
 import "./globals.css";
 
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import ToastNotice from "@/components/ToastNotice";
+import AuthClickGuard from "@/components/AuthClickGuard";
 
 export const metadata = {
   title: {
@@ -41,7 +44,11 @@ export default function RootLayout({ children }) {
   return (
     <html lang="bn">
       <body className="bg-[#f7f7f5] text-black antialiased">
-        <Navbar />
+        <ToastNotice />
+        <AuthClickGuard />
+        <Suspense fallback={<div className="h-[116px] bg-white" />}>
+          <Navbar />
+        </Suspense>
 
         {children}
 

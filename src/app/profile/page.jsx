@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
+import { Suspense } from "react";
 
 import { signOut } from "@/app/actions/auth";
 import {
@@ -11,7 +13,16 @@ export const metadata = {
   description: "আপনার বাজার দর অ্যাকাউন্টের তথ্য দেখুন।",
 };
 
-export default async function ProfilePage() {
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={<div className="min-h-[calc(100vh-180px)] bg-[#f7f7f5]" />}>
+      <ProfileContent />
+    </Suspense>
+  );
+}
+
+async function ProfileContent() {
+  await connection();
   const supabase = await createSupabaseServerClient();
 
   const {
@@ -112,15 +123,6 @@ export default async function ProfilePage() {
               </p>
             </div>
 
-            <div className="rounded-2xl bg-[#f7f7f5] p-5">
-              <p className="text-xs font-medium text-black/40">
-                ব্যবহারকারী ID
-              </p>
-
-              <p className="mt-2 truncate font-bold">
-                {user.id}
-              </p>
-            </div>
           </div>
         </section>
 

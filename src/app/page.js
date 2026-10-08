@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { getCategories, getProducts } from "@/lib/api";
 import { normalizeProducts } from "@/lib/products";
+import LocalDateTime from "@/components/LocalDateTime";
 
 const CATEGORY_ICONS = {
   চাল: "🍚",
@@ -47,7 +48,7 @@ export default async function HomePage() {
           <div>
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-black/10 bg-[#f1f3f0] px-4 py-2 text-sm font-medium">
               <span className="size-2 rounded-full bg-[#047857]" />
-              আজকের বাজারদর আপডেট
+              <LocalDateTime className="whitespace-nowrap" />
             </div>
             <h1 className="max-w-4xl text-4xl font-black leading-[1.05] tracking-tight sm:text-5xl lg:text-7xl">
               বাজারের দাম,<br />
@@ -59,7 +60,7 @@ export default async function HomePage() {
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link href="#products" className="btn border-0 bg-[#047857] px-6 text-white hover:bg-[#065f46]">
-                বাজারদর দেখুন
+                পণ্য খুঁজুন
               </Link>
               <Link href="#categories" className="btn border-black bg-white px-6 text-black hover:bg-black hover:text-white">
                 ক্যাটাগরি
@@ -165,7 +166,7 @@ function ProductCard({ product }) {
 
   return (
     <Link
-      href={`/product/${product.id}`}
+      href={`/product/${encodeURIComponent(product.id)}`}
       className="group rounded-2xl border border-black/10 bg-[#f7f7f5] p-5 transition-all duration-200 hover:-translate-y-1 hover:border-[#047857] hover:shadow-lg"
     >
       <div className="flex items-start justify-between gap-4">

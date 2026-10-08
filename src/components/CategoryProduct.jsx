@@ -17,24 +17,13 @@ export default function CategoryProducts({ products = [] }) {
       result.sort((a, b) => (b.price ?? -Infinity) - (a.price ?? -Infinity));
     }
 
-    if (sort === "change") {
-      result.sort(
-        (a, b) => Math.abs(b.change ?? 0) - Math.abs(a.change ?? 0),
-      );
-    }
-
     return result;
   }, [products, sort]);
 
   return (
     <div>
       {/* Toolbar */}
-      <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <p className="text-sm text-black/50">
-          মোট <span className="font-bold text-black">{products.length}</span> টি
-          পণ্য
-        </p>
-
+      <div className="mb-6 flex justify-end">
         <select
           value={sort}
           onChange={(event) => setSort(event.target.value)}
@@ -43,7 +32,6 @@ export default function CategoryProducts({ products = [] }) {
           <option value="default">ডিফল্ট</option>
           <option value="low">দাম: কম থেকে বেশি</option>
           <option value="high">দাম: বেশি থেকে কম</option>
-          <option value="change">দামের পরিবর্তন</option>
         </select>
       </div>
 
@@ -56,7 +44,7 @@ export default function CategoryProducts({ products = [] }) {
             return (
               <Link
                 key={product.id}
-                href={`/product/${product.id}`}
+                href={`/product/${encodeURIComponent(product.id)}`}
                 className="group rounded-3xl border border-black/10 bg-white p-5 transition duration-200 hover:-translate-y-1 hover:shadow-lg"
               >
                 <div className="flex items-start justify-between gap-4">

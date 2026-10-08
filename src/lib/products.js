@@ -5,9 +5,11 @@ export function normalizeProducts(items = []) {
 
   return items.map((item) => {
     const change = item.change ?? {};
+    const imageValue = typeof item.image === "string" ? item.image : "";
+    const imageIsUrl = /^(https?:\/\/|\/)/i.test(imageValue);
 
     return {
-      id: item.id,
+      id: item.id ?? item._id ?? item.productId ?? item.slug,
       slug: item.slug,
 
       name:
@@ -34,9 +36,11 @@ export function normalizeProducts(items = []) {
         item.unit ??
         "",
 
-      // API-তে image আসলে emoji
       image:
-        item.image ?? null,
+        imageIsUrl ? imageValue : null,
+
+      icon:
+        item.icon ?? (imageValue && !imageIsUrl ? imageValue : null) ?? item.categoryIcon ?? "🛒",
 
       // API-র today = current price
       price:

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { getCategories, getProducts } from "@/lib/api";
 import { normalizeProducts } from "@/lib/products";
+import CategoryProducts from "@/components/CategoryProduct";
 
 const CATEGORY_ICONS = {
   চাল: "🍚",
@@ -23,11 +24,19 @@ function listFrom(response) {
 export default async function CategoryPage({ params }) {
   const { slug } = await params;
 
-  const [categoryResult, productResult] =
-    await Promise.all([
-      getCategories(),
-      getProducts(),
-    ]);
+  const [categoryResponse, productResponse] = await Promise.allSettled([
+    getCategories(),
+    getProducts(),
+  ]);
+
+  if (categoryResponse.status === "rejected") {
+    throw categoryResponse.reason;
+  }
+
+  const categoryResult = categoryResponse.value;
+  const productResult = productResponse.status === "fulfilled"
+    ? productResponse.value
+    : null;
 
   const categories = listFrom(categoryResult);
 
@@ -129,7 +138,9 @@ export default async function CategoryPage({ params }) {
             </h3>
 
             <p className="mt-2 text-sm text-black/50">
-              এই ক্যাটাগরিতে বর্তমানে কোনো পণ্য নেই।
+              {productResponse.status === "rejected"
+                ? "পণ্যের তথ্য এখন পাওয়া যাচ্ছে না। একটু পরে আবার চেষ্টা করুন।"
+                : "এই ক্যাটাগরিতে বর্তমানে কোনো পণ্য নেই।"}
             </p>
 
             <Link
@@ -140,89 +151,9 @@ export default async function CategoryPage({ params }) {
             </Link>
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {categoryProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-              />
-            ))}
-          </div>
+          <CategoryProducts products={categoryProducts} />
         )}
       </section>
     </main>
-  );
-}
-
-function ProductCard({ product }) {
-  const price = product.price;
-  const change = product.change;
-
-  const isUp = change > 0;
-  const isDown = change < 0;
-
-  return (
-    <Link
-      href={`/product/${product.id}`}
-      className="group rounded-2xl border border-black/10 bg-white p-5 transition-all duration-200 hover:-translate-y-1 hover:border-[#047857] hover:shadow-lg"
-    >
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="flex size-12 items-center justify-center rounded-xl bg-[#f1f3f0] text-2xl">
-            {product.icon || "🛒"}
-          </div>
-
-          <div>
-            <h3 className="font-bold transition-colors group-hover:text-[#047857]">
-              {product.name}
-            </h3>
-
-            {product.unit && (
-              <p className="mt-1 text-xs text-black/40">
-                {product.unit}
-              </p>
-            )}
-          </div>
-        </div>
-
-        {change !== null &&
-          change !== undefined && (
-            <span
-              className={`rounded-full px-2.5 py-1 text-xs font-bold ${
-                isUp
-                  ? "bg-red-100 text-red-700"
-                  : isDown
-                    ? "bg-green-100 text-green-700"
-                    : "bg-black/5 text-black/50"
-              }`}
-            >
-              {isUp
-                ? "▲"
-                : isDown
-                  ? "▼"
-                  : "—"}{" "}
-              {Math.abs(change)}%
-            </span>
-          )}
-      </div>
-
-      <div className="mt-8 flex items-end justify-between">
-        <div>
-          <p className="text-xs text-black/40">
-            বর্তমান দাম
-          </p>
-
-          <p className="mt-1 text-2xl font-black">
-            {price === null || price === undefined
-              ? "—"
-              : `${price} টাকা`}
-          </p>
-        </div>
-
-        <span className="text-sm font-bold text-[#047857] transition-transform group-hover:translate-x-1">
-          বিস্তারিত →
-        </span>
-      </div>
-    </Link>
   );
 }

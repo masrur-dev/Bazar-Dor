@@ -6,21 +6,25 @@ function listFrom(response) {
   return Array.isArray(value) ? value : [];
 }
 
-const LAST_MODIFIED = "2025-01-01T00:00:00.000Z";
-
 export default async function sitemap() {
   const baseUrl =
     process.env.NEXT_PUBLIC_SITE_URL ||
     "http://localhost:3000";
+  const siteUrl = baseUrl.replace(/\/$/, "");
 
-  const categoryResult = await getCategories();
-  const productResult = await getProducts();
+  const [categoryResponse, productResponse] = await Promise.allSettled([
+    getCategories(),
+    getProducts(),
+  ]);
 
-  const categories = listFrom(categoryResult);
+  const categories = categoryResponse.status === "fulfilled"
+    ? listFrom(categoryResponse.value)
+    : [];
 
-  const products = normalizeProducts(
-    listFrom(productResult),
-  ).filter((product) => product.id);
+  const products = productResponse.status === "fulfilled"
+    ? normalizeProducts(listFrom(productResponse.value)).filter((product) => product.id)
+    : [];
+  const lastModified = new Date();
 
   const categoryUrls = categories
     .filter((category) => category.slug || category.id)
@@ -30,27 +34,22 @@ export default async function sitemap() {
         category.id;
 
       return {
-        url: `${baseUrl}/categories/${encodeURIComponent(slug)}`,
-        lastModified: LAST_MODIFIED,
+        url: `${siteUrl}/categories/${encodeURIComponent(slug)}`,
+        lastModified,
       };
     });
 
   const productUrls = products.map((product) => ({
-    url: `${baseUrl}/product/${product.id}`,
-    lastModified: LAST_MODIFIED,
+    url: `${siteUrl}/product/${encodeURIComponent(product.id)}`,
+    lastModified,
   }));
 
   return [
     {
-      url: baseUrl,
-      lastModified: LAST_MODIFIED,
+      url: siteUrl,
+      lastModified,
     },
-
-    {
-      url: `${baseUrl}/profile`,
-      lastModified: LAST_MODIFIED,
-    },
-
+    { url: `${siteUrl}/about`, lastModified },
     ...categoryUrls,
     ...productUrls,
   ];

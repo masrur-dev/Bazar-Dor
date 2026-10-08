@@ -2,26 +2,20 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import ProductImage from "@/components/ProductImage";
-import { getProducts } from "@/lib/api";
+import { getProduct } from "@/lib/api";
 import { normalizeProducts } from "@/lib/products";
-
-function listFrom(response) {
-  const value = response?.data ?? response;
-  return Array.isArray(value) ? value : [];
-}
 
 export default async function ProductDetailsPage({ params }) {
   const { id } = await params;
 
-  const productResult = await getProducts();
-
-  const products = normalizeProducts(
-    listFrom(productResult),
-  ).filter((product) => product.id);
-
-  const product = products.find(
-    (item) => String(item.id) === String(id),
-  );
+  const productResult = await getProduct(id);
+  const productData = productResult?.data?.product ?? productResult?.data ?? productResult?.product ?? productResult;
+  const productRecord = Array.isArray(productData)
+    ? productData[0]
+    : productData;
+  const product = productRecord
+    ? normalizeProducts([productRecord])[0]
+    : null;
 
   if (!product) {
     notFound();

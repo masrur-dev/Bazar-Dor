@@ -1,4 +1,6 @@
-const BASE_URL = "https://api.api-store.workers.dev/api/bazardor";
+const BASE_URL =
+  process.env.BAZARDOR_API_URL ||
+  "https://api.api-store.workers.dev/api/bazardor";
 
 async function getJson(path) {
   const response = await fetch(`${BASE_URL}${path}`, {

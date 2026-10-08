@@ -67,7 +67,7 @@ const ProductSearch = ({ products = [] }) => {
               {filteredProducts.map((product) => (
                 <Link
                   key={product.id}
-                  href={`/product/${product.id}`}
+                  href={`/product/${encodeURIComponent(product.id)}`}
                   className="group rounded-2xl border border-black/10 bg-white p-5 transition duration-200 hover:-translate-y-1 hover:border-[#047857]/30 hover:shadow-lg"
                 >
                   <div className="flex items-start justify-between gap-4">
