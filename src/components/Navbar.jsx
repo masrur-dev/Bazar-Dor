@@ -1,0 +1,131 @@
+import { Suspense } from "react";
+import Image from "next/image";
+import Link from "next/link";
+
+import { getCategories } from "@/lib/api";
+import CategoryNav from "@/components/CategoryNav";
+
+function listFrom(response) {
+  const value = response?.data ?? response;
+  return Array.isArray(value) ? value : [];
+}
+
+export default async function Navbar() {
+  const categoryResult = await getCategories();
+  const categories = listFrom(categoryResult);
+
+  return (
+    <header className="sticky top-0 z-50 border-b border-black/10 bg-white/95 backdrop-blur">
+      <div className="navbar mx-auto max-w-7xl px-4 sm:px-6">
+        <div className="navbar-start">
+          <Link
+            href="/"
+            className="group flex items-center gap-3"
+            aria-label="বাজার দর হোম"
+          >
+            <div className="rounded-xl bg-[#f1f3f0] p-1.5 transition-transform duration-200 group-hover:scale-105">
+              <Image
+                src="/logo-icon.svg"
+                alt="বাজার দর"
+                width={40}
+                height={40}
+                priority
+              />
+            </div>
+
+            <div className="hidden sm:block">
+              <h1 className="text-lg font-black leading-tight text-black">
+                বাজার দর
+              </h1>
+            </div>
+          </Link>
+        </div>
+
+        <div className="navbar-center hidden lg:flex">
+          <nav className="flex items-center gap-1">
+            <Link
+              href="/"
+              className="rounded-xl px-4 py-2 text-sm font-bold text-black/65 transition hover:bg-[#f1f3f0] hover:text-[#047857]"
+            >
+              হোম
+            </Link>
+
+            <Link
+              href="/about"
+              className="rounded-xl px-4 py-2 text-sm font-bold text-black/65 transition hover:bg-[#f1f3f0] hover:text-[#047857]"
+            >
+              আমাদের সম্পর্কে
+            </Link>
+          </nav>
+        </div>
+
+        <div className="navbar-end">
+          <div className="hidden items-center gap-2 sm:flex">
+            <Link
+              href="/sign-in"
+              className="btn btn-ghost btn-sm text-black hover:bg-black/5"
+            >
+              সাইন ইন
+            </Link>
+
+            <Link
+              href="/sign-up"
+              className="btn btn-sm border-0 bg-[#047857] text-white hover:bg-[#065f46]"
+            >
+              সাইন আপ
+            </Link>
+          </div>
+
+          <div className="dropdown dropdown-end sm:hidden">
+            <div
+              tabIndex={0}
+              role="button"
+              className="btn btn-ghost btn-square text-black"
+              aria-label="মেনু খুলুন"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="size-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              </svg>
+            </div>
+
+            <ul
+              tabIndex={0}
+              className="menu dropdown-content z-[60] mt-3 w-56 rounded-2xl border border-black/10 bg-white p-3 shadow-xl"
+            >
+              <li>
+                <Link href="/">হোম</Link>
+              </li>
+              <li>
+                <Link href="/about">আমাদের সম্পর্কে</Link>
+              </li>
+              <li>
+                <Link href="/profile">প্রোফাইল</Link>
+              </li>
+              <li>
+                <Link href="/sign-in">সাইন ইন</Link>
+              </li>
+              <li>
+                <Link href="/sign-up">সাইন আপ</Link>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <Suspense fallback={<div className="h-10" />}>
+        <CategoryNav categories={categories} />
+      </Suspense>
+    </header>
+  );
+}
