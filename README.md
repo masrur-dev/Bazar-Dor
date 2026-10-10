@@ -29,7 +29,7 @@
 
 ```bash
 # Clone the repository
-git clone Bazar-Dor
+git clone https://github.com/masrur-dev/Bazar-Dor.git
 
 # Go to the project directory
 cd Bazar-Dor-Web
