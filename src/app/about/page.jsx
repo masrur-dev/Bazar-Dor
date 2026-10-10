@@ -23,11 +23,92 @@ const features = [
   },
 ];
 
+const products = [
+  { name: "চাল", icon: "🍚", href: "/categories/chal" },
+  { name: "ডাল", icon: "🫘", href: "/categories/dal" },
+  { name: "তেল", icon: "🛢️", href: "/categories/tel" },
+  { name: "আলু", icon: "🥔", href: "/categories/alu" },
+  { name: "পেঁয়াজ", icon: "🧅", href: "/categories/peyaj" },
+  { name: "ডিম", icon: "🥚", href: "/categories/dim" },
+  { name: "দুধ", icon: "🥛", href: "/categories/dudh" },
+];
+
 export const metadata = {
   title: "আমাদের সম্পর্কে",
   description:
     "বাজার দর সম্পর্কে জানুন এবং বাংলাদেশের প্রয়োজনীয় পণ্যের বাজারদর এক জায়গায় দেখুন।",
 };
+
+function ProductMarquee() {
+  return (
+    <section
+      aria-label="জনপ্রিয় পণ্যের ক্যাটাগরি"
+      className="overflow-hidden border-y border-emerald-100 bg-white py-5"
+    >
+      <div className="mx-auto mb-4 max-w-7xl px-4 sm:px-6">
+        <p className="text-sm font-bold text-[#047857]">
+          🛒 প্রয়োজনীয় পণ্য এক নজরে
+        </p>
+      </div>
+
+      <div className="group relative flex overflow-hidden">
+        <div className="flex w-max shrink-0 animate-marquee items-center gap-4 pr-4 group-hover:[animation-play-state:paused]">
+          {[...products, ...products].map((product, index) => (
+            <Link
+              key={`${product.name}-${index}`}
+              href={product.href}
+              className="flex min-w-36 items-center gap-3 rounded-2xl border border-black/10 bg-[#f7f7f5] px-5 py-4 transition hover:border-[#047857] hover:bg-emerald-50"
+            >
+              <span className="text-3xl" aria-hidden="true">
+                {product.icon}
+              </span>
+
+              <span className="whitespace-nowrap text-sm font-bold text-black">
+                {product.name}
+              </span>
+
+              <span
+                className="text-[#047857]"
+                aria-hidden="true"
+              >
+                ↗
+              </span>
+            </Link>
+          ))}
+        </div>
+
+        <div
+          aria-hidden="true"
+          className="flex w-max shrink-0 animate-marquee items-center gap-4 pr-4 group-hover:[animation-play-state:paused]"
+        >
+          {[...products, ...products].map((product, index) => (
+            <Link
+              tabIndex={-1}
+              key={`duplicate-${product.name}-${index}`}
+              href={product.href}
+              className="flex min-w-36 items-center gap-3 rounded-2xl border border-black/10 bg-[#f7f7f5] px-5 py-4 transition hover:border-[#047857] hover:bg-emerald-50"
+            >
+              <span className="text-3xl" aria-hidden="true">
+                {product.icon}
+              </span>
+
+              <span className="whitespace-nowrap text-sm font-bold text-black">
+                {product.name}
+              </span>
+
+              <span
+                className="text-[#047857]"
+                aria-hidden="true"
+              >
+                ↗
+              </span>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
 
 export default function AboutPage() {
   return (
@@ -60,6 +141,9 @@ export default function AboutPage() {
           </Link>
         </div>
       </section>
+
+      {/* Product Marquee */}
+      <ProductMarquee />
 
       {/* Features */}
       <section className="border-y border-black/10 bg-white">

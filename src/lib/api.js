@@ -1,6 +1,5 @@
 const BASE_URL =
-  process.env.BAZARDOR_API_URL ||
-  "https://api.api-store.workers.dev/api/bazardor";
+  "https://openapi.programming-hero.com/api/bazardor";
 
 async function getJson(path) {
   const response = await fetch(`${BASE_URL}${path}`, {
@@ -18,30 +17,22 @@ async function getJson(path) {
   }
 }
 
-export const getCategories = async () => {
+export async function getCategories() {
   return getJson("/categories");
-};
+}
 
-export const getProducts = async () => {
+export async function getProducts() {
   return getJson("/products");
-};
+}
 
-export const getProduct = async (id) => {
-  const safeId = encodeURIComponent(String(id));
-  const response = await fetch(`${BASE_URL}/products/${safeId}`, {
-    next: { revalidate: 3600 },
-  });
+export async function getProduct(id) {
+  const products = await getProducts();
 
-  if (response.status === 404) {
-    return null;
-  }
-  if (!response.ok) {
-    throw new Error(`API request failed (${response.status})`);
+  if (!Array.isArray(products)) {
+    throw new Error("Invalid products API response");
   }
 
-  try {
-    return await response.json();
-  } catch {
-    throw new Error("API returned invalid JSON");
-  }
-};
+  return (
+    products.find((product) => String(product.id) === String(id)) ?? null
+  );
+}
