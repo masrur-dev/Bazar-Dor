@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 
 import { getCategories, getProducts } from "@/lib/api";
@@ -21,7 +22,7 @@ function listFrom(response) {
   return Array.isArray(value) ? value : [];
 }
 
-export default async function CategoryPage({ params }) {
+async function CategoryContent({ params }) {
   const { slug } = await params;
 
   const [categoryResponse, productResponse] = await Promise.allSettled([
@@ -155,5 +156,26 @@ export default async function CategoryPage({ params }) {
         )}
       </section>
     </main>
+  );
+}
+
+export default function CategoryPage({ params }) {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-[#f7f7f5] px-4 py-12">
+          <div className="mx-auto max-w-7xl">
+            <div className="skeleton h-20 w-full rounded-2xl" />
+            <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="skeleton h-64 rounded-2xl" />
+              <div className="skeleton h-64 rounded-2xl" />
+              <div className="skeleton h-64 rounded-2xl" />
+            </div>
+          </div>
+        </main>
+      }
+    >
+      <CategoryContent params={params} />
+    </Suspense>
   );
 }

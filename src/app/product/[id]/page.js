@@ -1,11 +1,12 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 
 import ProductImage from "@/components/ProductImage";
 import { getProduct } from "@/lib/api";
 import { normalizeProducts } from "@/lib/products";
 
-export default async function ProductDetailsPage({ params }) {
+async function ProductDetailsContent({ params }) {
   const { id } = await params;
 
   const productResult = await getProduct(id);
@@ -296,5 +297,22 @@ export default async function ProductDetailsPage({ params }) {
         </div>
       </section>
     </main>
+  );
+}
+
+export default function ProductDetailsPage({ params }) {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-[#f7f7f5] px-4 py-12 sm:px-6">
+          <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[0.8fr_1.2fr]">
+            <div className="skeleton min-h-80 rounded-3xl" />
+            <div className="skeleton min-h-80 rounded-3xl" />
+          </div>
+        </main>
+      }
+    >
+      <ProductDetailsContent params={params} />
+    </Suspense>
   );
 }
