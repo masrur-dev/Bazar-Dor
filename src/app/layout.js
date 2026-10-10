@@ -44,7 +44,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="bn">
       <body className="bg-[#f7f7f5] text-black antialiased">
-        <ToastNotice />
+        <Suspense fallback={null}>
+          <ToastNotice />
+        </Suspense>
         <AuthClickGuard />
         <Suspense fallback={<div className="h-[116px] bg-white" />}>
           <Navbar />

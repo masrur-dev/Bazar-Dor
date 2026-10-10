@@ -1,28 +1,45 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 
 export default function ToastNotice() {
-  const [message, setMessage] = useState("");
+  const [toast, setToast] = useState(null);
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const search = searchParams.toString();
+  const timerRef = useRef(null);
+
+  const showToast = useCallback((text, type = "success") => {
+    if (!text) return;
+
+    setToast({ text, type });
+    window.clearTimeout(timerRef.current);
+    timerRef.current = window.setTimeout(() => {
+      setToast(null);
+      timerRef.current = null;
+    }, 1000);
+  }, []);
 
   useEffect(() => {
-    let timer;
-    let activeMessage = "";
-    const showToast = (text) => {
-      if (!text || text === activeMessage) return;
-
-      activeMessage = text;
-      setMessage(text);
-      window.clearTimeout(timer);
-      timer = window.setTimeout(() => {
-        setMessage("");
-        activeMessage = "";
-      }, 3200);
+    const handleToastEvent = (event) => {
+      const detail = event.detail;
+      if (typeof detail === "string") showToast(detail);
+      else if (detail) showToast(detail.message, detail.type);
     };
-    const handleToastEvent = (event) => showToast(event.detail);
 
     window.addEventListener("bazar-dor:toast", handleToastEvent);
+    if (window.performance.getEntriesByType("navigation")[0]?.type === "reload") {
+      showToast("Page refreshed successfully", "info");
+    }
 
+    return () => {
+      window.removeEventListener("bazar-dor:toast", handleToastEvent);
+      window.clearTimeout(timerRef.current);
+    };
+  }, [showToast]);
+
+  useEffect(() => {
     const currentUrl = new URL(window.location.href);
     const toastType = currentUrl.searchParams.get("toast");
     const authError = currentUrl.searchParams.get("error");
@@ -30,15 +47,17 @@ export default function ToastNotice() {
       .split("; ")
       .find((cookie) => cookie.startsWith("bazar_dor_toast="))
       ?.split("=")[1];
-    if (queuedToast === "logout") {
-      showToast("সফলভাবে সাইন আউট হয়েছে।");
-      document.cookie = "bazar_dor_toast=; Max-Age=0; Path=/; SameSite=Lax";
-    } else if (toastType === "logout" || toastType === "login") {
-      const toastKey = `bazar-dor-toast:${currentUrl.pathname}:${toastType}`;
-      if (window.sessionStorage.getItem(toastKey) !== "shown") {
-        showToast(toastType === "logout" ? "সফলভাবে সাইন আউট হয়েছে।" : "সফলভাবে সাইন ইন হয়েছে।");
-        window.sessionStorage.setItem(toastKey, "shown");
+    if (toastType === "logout" || toastType === "login") {
+      // A completed auth redirect should take precedence over a stale queued toast.
+      if (queuedToast === "logout") {
+        document.cookie = "bazar_dor_toast=; Max-Age=0; Path=/; SameSite=Lax";
       }
+      showToast(toastType === "logout" ? "Logout successful" : "Login successful");
+      currentUrl.searchParams.delete("toast");
+      window.history.replaceState({}, "", `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`);
+    } else if (queuedToast === "logout") {
+      showToast("Logout successful");
+      document.cookie = "bazar_dor_toast=; Max-Age=0; Path=/; SameSite=Lax";
     } else if (authError) {
       const errorMessages = {
         oauth: "Google বা GitHub দিয়ে সাইন ইন সম্পন্ন হয়নি। আবার চেষ্টা করুন।",
@@ -46,28 +65,17 @@ export default function ToastNotice() {
         "auth-not-configured": "সাইন ইন সেবা সেট আপ করা নেই।",
       };
       if (errorMessages[authError]) {
-        const toastKey = `bazar-dor-toast:${currentUrl.pathname}:error:${authError}`;
-        if (window.sessionStorage.getItem(toastKey) !== "shown") {
-          showToast(errorMessages[authError]);
-          window.sessionStorage.setItem(toastKey, "shown");
-        }
+        showToast(errorMessages[authError], "info");
       }
-    } else if (window.performance.getEntriesByType("navigation")[0]?.type === "reload") {
-      showToast("পেজ রিফ্রেশ হয়েছে।");
     }
+  }, [pathname, search, showToast]);
 
-    return () => {
-      window.removeEventListener("bazar-dor:toast", handleToastEvent);
-      window.clearTimeout(timer);
-    };
-  }, []);
-
-  if (!message) return null;
+  if (!toast) return null;
 
   return (
-    <div className="fixed left-1/2 top-4 z-100 -translate-x-1/2 px-4">
-      <div role="status" className="alert w-max max-w-[calc(100vw-2rem)] border-0 bg-[#047857] text-white shadow-lg">
-        <span>{message}</span>
+    <div className="toast toast-end z-100">
+      <div role="status" className={`alert alert-${toast.type} shadow-lg`}>
+        <span>{toast.text}</span>
       </div>
     </div>
   );

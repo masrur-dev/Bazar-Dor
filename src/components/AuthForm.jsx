@@ -85,7 +85,7 @@ export default function AuthForm({ mode, initialError = "" }) {
       }
 
       window.dispatchEvent(new CustomEvent("bazar-dor:toast", {
-        detail: isSignUp ? "অ্যাকাউন্ট তৈরি সফল হয়েছে।" : "সফলভাবে সাইন ইন হয়েছে।",
+        detail: isSignUp ? "Account created successfully" : "Login successful",
       }));
       router.push("/profile");
       router.refresh();
@@ -201,7 +201,7 @@ export default function AuthForm({ mode, initialError = "" }) {
           <div className="my-6 flex items-center gap-3 text-xs text-black/35"><span className="h-px flex-1 bg-black/10" />অথবা ইমেইল দিয়ে<span className="h-px flex-1 bg-black/10" /></div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {isSignUp && <div><label htmlFor="name" className="mb-2 block text-sm font-bold">আপনার নাম</label><input id="name" name="name" type="text" autoComplete="name" required value={name} onChange={(event) => setName(event.target.value)} placeholder="যেমন: রাহিম আহমেদ" className={inputClass} disabled={loading} /></div>}
+            {isSignUp && <div><label htmlFor="name" className="mb-2 block text-sm font-bold">আপনার নাম</label><input id="name" name="name" type="text" autoComplete="name" required value={name} onChange={(event) => setName(event.target.value)} placeholder="আপনার নামটি লিখুন" className={inputClass} disabled={loading} /></div>}
             <div><label htmlFor="email" className="mb-2 block text-sm font-bold">ইমেইল</label><input id="email" name="email" type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@example.com" className={inputClass} disabled={loading} /></div>
             <div><div className="mb-2 flex items-center justify-between"><label htmlFor="password" className="block text-sm font-bold">পাসওয়ার্ড</label>{!isSignUp && <Link href="/forgot-password" className="text-xs font-semibold text-[#047857] hover:text-[#065f46]">পাসওয়ার্ড ভুলে গেছেন?</Link>}</div><input id="password" name="password" type="password" autoComplete={isSignUp ? "new-password" : "current-password"} required minLength={6} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="কমপক্ষে ৬ অক্ষর" className={inputClass} disabled={loading} /></div>
             {isSignUp && <div><label htmlFor="confirm-password" className="mb-2 block text-sm font-bold">পাসওয়ার্ড আবার লিখুন</label><input id="confirm-password" name="confirm-password" type="password" autoComplete="new-password" required minLength={6} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder="পাসওয়ার্ডটি আবার লিখুন" className={inputClass} disabled={loading} /></div>}
