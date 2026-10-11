@@ -35,7 +35,7 @@ export default function AuthForm({ mode, initialError = "" }) {
     setEmail(submittedEmail);
 
     if (!authClient) {
-      setError("Supabase config নেই। .env.local ফাইলে NEXT_PUBLIC_SUPABASE_URL এবং NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY বসিয়ে dev server আবার চালু করুন।");
+      setError("Supabase config নেই। .env.local ফাইলে NEXT_PUBLIC_SUPABASE_URL এবং NEXT_PUBLIC_SUPABASE_ANON_KEY (অথবা NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) বসিয়ে dev server আবার চালু করুন।");
       return;
     }
     if (isSignUp && !submittedName) {
@@ -105,7 +105,7 @@ export default function AuthForm({ mode, initialError = "" }) {
       return;
     }
     if (!authClient) {
-      setError("Supabase config নেই। .env.local ফাইলে NEXT_PUBLIC_SUPABASE_URL এবং NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY বসিয়ে dev server আবার চালু করুন।");
+      setError("Supabase config নেই। .env.local ফাইলে NEXT_PUBLIC_SUPABASE_URL এবং NEXT_PUBLIC_SUPABASE_ANON_KEY (অথবা NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) বসিয়ে dev server আবার চালু করুন।");
       return;
     }
 
@@ -136,7 +136,7 @@ export default function AuthForm({ mode, initialError = "" }) {
     setError("");
     setNotice("");
     if (!authClient) {
-      setError("Supabase config নেই। .env.local ফাইলে NEXT_PUBLIC_SUPABASE_URL এবং NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY বসিয়ে dev server আবার চালু করুন।");
+      setError("Supabase config নেই। .env.local ফাইলে NEXT_PUBLIC_SUPABASE_URL এবং NEXT_PUBLIC_SUPABASE_ANON_KEY (অথবা NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) বসিয়ে dev server আবার চালু করুন।");
       return;
     }
     setLoading(true);

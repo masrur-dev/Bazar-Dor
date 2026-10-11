@@ -16,7 +16,7 @@ export default function ForgotPasswordForm() {
     setSent(false);
 
     if (!authClient) {
-      setError("Supabase config নেই। .env.local ফাইলে NEXT_PUBLIC_SUPABASE_URL এবং NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY বসিয়ে dev server আবার চালু করুন।");
+      setError("Supabase config নেই। .env.local ফাইলে NEXT_PUBLIC_SUPABASE_URL এবং NEXT_PUBLIC_SUPABASE_ANON_KEY (অথবা NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) বসিয়ে dev server আবার চালু করুন।");
       return;
     }
 

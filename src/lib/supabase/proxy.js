@@ -1,9 +1,18 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 
+export function getSupabaseKey() {
+  return (
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+    process.env.NEXT_PUBLIC_SUPABASE_KEY ??
+    ""
+  );
+}
+
 export async function updateSession(request) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  const key = getSupabaseKey();
 
   if (!url || !key) {
     return NextResponse.next({ request });

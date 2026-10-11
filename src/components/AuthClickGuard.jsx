@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -11,65 +12,40 @@ const publicAuthPaths = [
   "/reset-password",
 ];
 
+function isPublicAuthPath(pathname) {
+  return publicAuthPaths.includes(pathname);
+}
+
 export default function AuthClickGuard() {
   const router = useRouter();
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   useEffect(() => {
-    if (!authClient) return;
-
-    let sessionReady = false;
-    let hasSession = false;
+    let active = true;
     let pendingSessionCheck = null;
 
-    // ----------------------------------------
-    // Update session state
-    // ----------------------------------------
-    const updateSession = (session) => {
-      hasSession = Boolean(session);
-      sessionReady = true;
-    };
+    // Prevent replayed clicks from being intercepted again.
+    const replayAllowed = new WeakSet();
 
-    // ----------------------------------------
-    // Initial session check
-    // ----------------------------------------
-    authClient.auth
-      .getSession()
-      .then(({ data }) => {
-        updateSession(data?.session);
-      })
-      .catch(() => {
-        sessionReady = true;
-        hasSession = false;
-      });
-
-    // ----------------------------------------
-    // Listen for auth changes
-    // ----------------------------------------
-    const {
-      data: { subscription } = {},
-    } = authClient.auth.onAuthStateChange((_event, session) => {
-      updateSession(session);
-    });
-
-    // ----------------------------------------
-    // Check session when necessary
-    // ----------------------------------------
+    // Check the latest authentication session.
     const checkSession = async () => {
-      if (sessionReady) {
-        return hasSession;
+      if (!authClient?.auth) {
+        return false;
       }
 
       if (!pendingSessionCheck) {
         pendingSessionCheck = authClient.auth
           .getSession()
-          .then(({ data }) => {
-            updateSession(data?.session);
-            return hasSession;
+          .then(({ data, error }) => {
+            if (error) {
+              console.error("Session check failed:", error.message);
+              return false;
+            }
+
+            return Boolean(data?.session);
           })
-          .catch(() => {
-            sessionReady = true;
-            hasSession = false;
+          .catch((error) => {
+            console.error("Authentication error:", error);
             return false;
           })
           .finally(() => {
@@ -80,45 +56,69 @@ export default function AuthClickGuard() {
       return pendingSessionCheck;
     };
 
-    // ----------------------------------------
-    // Click Guard
-    // ----------------------------------------
     const guardClick = async (event) => {
-      // Ignore already prevented events.
       if (event.defaultPrevented) return;
 
-      // Ignore clicks inside the login modal.
-      if (event.target.closest("[data-auth-gate-modal]")) return;
+      // Ignore clicks from non-element targets.
+      if (!(event.target instanceof Element)) return;
 
-      // Keep sign-in and account recovery usable after client-side navigation.
-      if (publicAuthPaths.includes(window.location.pathname)) return;
+      // Allow interaction with the login modal.
+      if (event.target.closest("[data-auth-gate-modal]")) {
+        return;
+      }
 
-      // Find clickable element.
+      // Authentication pages must remain accessible.
+      if (isPublicAuthPath(window.location.pathname)) {
+        return;
+      }
+
       const control = event.target.closest(
         'a[href], button, input[type="submit"], [role="button"]'
       );
 
       if (!control) return;
 
-      // Allow explicitly permitted controls.
-      if (control.hasAttribute("data-auth-gate-allow")) return;
+      // Allow explicitly permitted elements.
+      if (control.hasAttribute("data-auth-gate-allow")) {
+        return;
+      }
 
-      // ----------------------------------------
-      // Handle links
-      // ----------------------------------------
+      // Allow a click replayed after authentication.
+      if (replayAllowed.has(control)) {
+        replayAllowed.delete(control);
+        return;
+      }
+
       if (control instanceof HTMLAnchorElement) {
+        // Preserve normal browser behavior for modified clicks.
+        if (
+          event.metaKey ||
+          event.ctrlKey ||
+          event.shiftKey ||
+          event.altKey
+        ) {
+          return;
+        }
+
+        if (control.hasAttribute("download")) {
+          return;
+        }
+
         const destination = new URL(
           control.href,
           window.location.origin
         );
 
-        // Allow external links.
-        if (destination.origin !== window.location.origin) return;
+        // Allow external destinations.
+        if (destination.origin !== window.location.origin) {
+          return;
+        }
 
-        // Allow public auth pages.
-        if (publicAuthPaths.includes(destination.pathname)) return;
+        if (isPublicAuthPath(destination.pathname)) {
+          return;
+        }
 
-        // Allow hash-only links.
+        // Allow navigation within the same page.
         if (
           destination.pathname === window.location.pathname &&
           destination.search === window.location.search &&
@@ -128,84 +128,66 @@ export default function AuthClickGuard() {
         }
       }
 
-      // ----------------------------------------
-      // User is already logged in
-      // ----------------------------------------
-      if (sessionReady && hasSession) {
-        return;
-      }
-
-      // ----------------------------------------
-      // Stop the action temporarily
-      // ----------------------------------------
+      // Pause the original action.
       event.preventDefault();
       event.stopPropagation();
 
-      // ----------------------------------------
-      // Check session before showing modal
-      // ----------------------------------------
       const authenticated = await checkSession();
 
-      // ----------------------------------------
-      // Session exists
-      // ----------------------------------------
-      if (authenticated) {
-        // Do NOT call control.click().
-        // The original click has already been prevented.
-        // Reload the current navigation naturally based on element type.
+      // Component may have unmounted during the check.
+      if (!active) return;
 
-        if (control instanceof HTMLAnchorElement) {
-          const destination = new URL(
-            control.href,
-            window.location.origin
-          );
+      if (!authenticated) {
+        setShowLoginPrompt(true);
+        return;
+      }
 
-          router.push(
-            `${destination.pathname}${destination.search}${destination.hash}`
-          );
-        } else {
-          // For buttons/forms, dispatch a new click after
-          // temporarily allowing this specific element.
-          control.setAttribute("data-auth-gate-allow", "true");
+      // Continue the original action for authenticated users.
+      if (!control.isConnected) return;
 
-          control.click();
+      if (control instanceof HTMLAnchorElement) {
+        const destination = new URL(
+          control.href,
+          window.location.origin
+        );
 
-          control.removeAttribute("data-auth-gate-allow");
+        if (control.target === "_blank") {
+          window.open(destination.href, "_blank", "noopener,noreferrer");
+          return;
         }
+
+        router.push(
+          `${destination.pathname}${destination.search}${destination.hash}`
+        );
 
         return;
       }
 
-      // ----------------------------------------
-      // User is not logged in
-      // ----------------------------------------
-      setShowLoginPrompt(true);
+      // Replay the button click exactly once.
+      replayAllowed.add(control);
+
+      try {
+        control.click();
+      } finally {
+        replayAllowed.delete(control);
+      }
     };
 
     document.addEventListener("click", guardClick, true);
 
-    // ----------------------------------------
-    // Cleanup
-    // ----------------------------------------
     return () => {
+      active = false;
       document.removeEventListener("click", guardClick, true);
-      subscription?.unsubscribe();
     };
   }, [router]);
 
-  // ----------------------------------------
-  // Login modal
-  // ----------------------------------------
   const closeModal = () => {
     setShowLoginPrompt(false);
   };
 
   const goToLogin = () => {
     setShowLoginPrompt(false);
-
-    if (!publicAuthPaths.includes(window.location.pathname)) {
-      router.push("/sign-in");
-    }
+    router.push("/sign-in");
   };
 
   return (
@@ -216,10 +198,15 @@ export default function AuthClickGuard() {
           className="modal modal-open"
           data-auth-gate-modal
           aria-labelledby="login-required-title"
+          aria-modal="true"
+          onCancel={closeModal}
         >
-          <div className="modal-box w-11/12 max-w-md bg-white border-2 border-[#145F46]">
-            {/* Header */}
+          <div className="modal-box w-11/12 max-w-md border-2 border-[#145F46] bg-white shadow-xl">
             <div className="text-center">
+              <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-full bg-emerald-50 text-3xl">
+                🔐
+              </div>
+
               <h2
                 id="login-required-title"
                 className="text-xl font-bold text-gray-900"
@@ -227,12 +214,13 @@ export default function AuthClickGuard() {
                 লগইন প্রয়োজন
               </h2>
 
-              <p className="mt-2 text-sm text-gray-600">
+              <p className="mt-3 text-sm leading-6 text-gray-600">
                 এই কাজটি করতে আপনাকে আগে লগইন করতে হবে।
+                আপনার অ্যাকাউন্ট না থাকলে নতুন অ্যাকাউন্ট
+                তৈরি করতে পারেন।
               </p>
             </div>
 
-            {/* Actions */}
             <div className="modal-action flex items-center justify-end gap-3">
               <button
                 type="button"
@@ -252,7 +240,6 @@ export default function AuthClickGuard() {
             </div>
           </div>
 
-          {/* Backdrop */}
           <button
             type="button"
             className="modal-backdrop"
